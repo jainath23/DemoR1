@@ -33,7 +33,7 @@ function RulesStatusBean setRuleStatusDSL(String ruleName,String status,String s
     rulesStatusBean.setValueType(inputType);
     return rulesStatusBean;
 }
-/*
+
 // FailureMessage 1:- MPP section has more than 1 successfully rated Quotes
 rule "MPPSTP_MPP_QUOTES"
 ruleflow-group "MPPSTP"
@@ -207,10 +207,10 @@ ruleflow-group "MPPSTP"
     	set status ("MPP_STPRule12", "false", "12", " ", scheduleItems)
     	rule response ("MPP_ISSTP", false)
 	    set focus "MPPReview";
-end*/
+end
 
 //FailureMessage 12:-number of Vehicles added in Vehicle Schedule are more than 3
-rule "MPPSTP_EQ_ZONE"
+/*rule "MPPSTP_EQ_ZONE"
 ruleflow-group "MPPSTP"
     when
         Given lob is "MPP"
@@ -223,4 +223,4 @@ ruleflow-group "MPPSTP"
 	    Rules Response "MPP_ISSTP", false
 	    Set focus "MPPReview";
        
-end
+end*/
