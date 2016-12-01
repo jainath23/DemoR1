@@ -1,12 +1,108 @@
 package com.intellect.xponent.base;
 
-function RulesStatusBean setRuleStatus(String ruleName,String status,String seqNum,String inputValue,String inputType)
-{
-    RulesStatusBean rulesStatusBean=new RulesStatusBean();
-    rulesStatusBean.setRule(ruleName);
-    rulesStatusBean.setStatus(status);
-    rulesStatusBean.setSeqNum(seqNum);
-    rulesStatusBean.setInputValue(inputValue);
-    rulesStatusBean.setValueType(inputType);
-    return rulesStatusBean;
-}
+
+import java.text.SimpleDateFormat;
+import com.seec.insurance.pc.comml.application.lob.beans.LOBInfoBean;
+import com.seec.insurance.pc.comml.application.lob.beans.ScheduleGroupInfoBean;
+import com.seec.insurance.pc.comml.application.lob.beans.ScheduleInfoBean;
+import com.seec.insurance.pc.comml.application.lob.beans.SchedulePropertyInfoBean;
+import com.seec.insurance.pc.comml.application.lob.beans.PreviousInsuranceInfoBean;
+import com.seec.insurance.pc.comml.application.lob.beans.ScheduleItemInfoBean;
+import com.seec.insurance.pc.comml.application.beans.CommlPolicyInfoBean;
+import com.seec.insurance.pc.comml.application.lob.quote.beans.QuoteInfoBean;
+import com.seec.insurance.pc.comml.utility.beans.CurrencyInfoBean;
+import com.seec.insurance.rules.beans.STPRulesResponseBean;
+import com.seec.insurance.pc.comml.application.workflowmgmt.beans.RulesStatusBean;
+import java.util.*;
+/*
+rule "MPP_ReviewLocationSchedule"
+ruleflow-group "MPPReview"
+   when
+     $commPolicy : CommlPolicyInfoBean();
+     $STPRulesResponseBean:STPRulesResponseBean();
+     $lobInfo :  LOBInfoBean(lob=="MPP") from $commPolicy.getLobs();
+     $scheduleInfo : ScheduleInfoBean()from $lobInfo.getSchedules();
+     $scheduleGroupInfo : ScheduleGroupInfoBean(scheduleCode =="LOCATION",scheduleItems.size() > 2) from $scheduleInfo.getScheduleGroups();
+   then
+      System.out.println("Creating Review location schedule task");
+	  $STPRulesResponseBean.getResultMap().put("MPP_ReviewLocationSchedule",true);
+end 
+
+rule "MPP_ReviewVehicleSchedule"
+ruleflow-group "MPPReview"
+   when
+    $commPolicy : CommlPolicyInfoBean();
+    $STPRulesResponseBean:STPRulesResponseBean();
+    $lobInfo :  LOBInfoBean(lob=="MPP") from $commPolicy.getLobs();
+    $scheduleInfo : ScheduleInfoBean()from $lobInfo.getSchedules();
+    $scheduleGroupInfo : ScheduleGroupInfoBean(scheduleCode =="VEHICLE") from $scheduleInfo.getScheduleGroups();
+    Boolean(booleanValue == true) from ($scheduleGroupInfo.getScheduleItems().size()>2)
+   then
+    System.out.println("Creating Review vehicle schedule task");
+    $STPRulesResponseBean.getResultMap().put("MPP_ReviewVehicleSchedule",true);
+end 
+
+
+rule "ReviewFinancialStatement" 
+ruleflow-group "MPPReview"
+   when
+     $commPolicy : CommlPolicyInfoBean();
+     $STPRulesResponseBean:STPRulesResponseBean();
+     $lobInfo :  LOBInfoBean(lob=="MPP") from $commPolicy.getLobs();
+     $scheduleInfo : ScheduleInfoBean()from $lobInfo.getSchedules();
+     $scheduleGroupInfo : ScheduleGroupInfoBean(scheduleCode =="FINSTMT") from $scheduleInfo.getScheduleGroups();  
+   then
+    System.out.println("Creating Review financial statement task");
+    $STPRulesResponseBean.getResultMap().put("MPP_REVIEW_FIN_STMT",true);
+end 
+
+rule "Previous Insurance details are entered for previous year"
+ruleflow-group "MPPReview"
+	when
+		$commPolicy : CommlPolicyInfoBean();
+		$STPRulesResponseBean:STPRulesResponseBean();
+		$lobInfo: LOBInfoBean(lob.equalsIgnoreCase("MPP"),preInsSize : previousInsurances.size()) from $commPolicy.getLobs();
+	    Boolean(booleanValue == true) from preInsSize == 0 or
+	    not( PreviousInsuranceInfoBean( java.util.Calendar.getInstance().get(java.util.Calendar.YEAR)-1 == OperationHelper.getYear(getPolicyEffectiveDate())) from $lobInfo.getPreviousInsurances())
+	then
+	System.out.println("Creating Review prior insurance task");
+    $STPRulesResponseBean.getResultMap().put("MPP_REVIEW_PRIOR_INS",true);
+end
+
+
+
+rule  "MPP_ReviewCoverage"
+ruleflow-group "MPPReview"
+   when
+    $commPolicy : CommlPolicyInfoBean();
+    $STPRulesResponseBean:STPRulesResponseBean();
+    $lobInfo :  LOBInfoBean(lob=="MPP") from $commPolicy.getLobs();
+    $quote :QuoteInfoBean() from $lobInfo.quotes;
+   then
+    System.out.println("Creating coverage task");
+    $STPRulesResponseBean.getResultMap().put("MPP_ReviewCoverage_"+$quote.getQuoteId(),true);
+end
+
+rule  "MPP_ReviewIRPM"
+ruleflow-group "MPPReview"
+   when
+    $commPolicy : CommlPolicyInfoBean();
+    $STPRulesResponseBean:STPRulesResponseBean();
+    $lobInfo :  LOBInfoBean(lob=="MPP") from $commPolicy.getLobs();
+    $quote :QuoteInfoBean() from $lobInfo.quotes;
+   then
+    System.out.println("Creating IRPM task");
+    $STPRulesResponseBean.getResultMap().put("MPP_ReviewIRPM_"+$quote.getQuoteId(),true);
+end
+
+rule  "MPP_ReviewRating"
+ruleflow-group "MPPReview"
+   when
+    $commPolicy : CommlPolicyInfoBean();
+    $STPRulesResponseBean:STPRulesResponseBean();
+    $lobInfo :  LOBInfoBean(lob=="MPP") from $commPolicy.getLobs();
+    $quote :QuoteInfoBean() from $lobInfo.quotes;
+   then
+    System.out.println("Creating rating task");
+    $STPRulesResponseBean.getResultMap().put("MPP_ReviewRating_"+$quote.getQuoteId(),true);
+end*/
