@@ -1,2 +1,81 @@
 package com.intellect.xponent.base;
 
+
+
+//FailureMessage 1:- two or more locations added
+ rule "MPP_ReviewLocationSchedule"
+ ruleflow-group "MPPReview"
+    when 
+        LOB name is "MPP" 
+        schedule code is "LOCATION" and items size is greater than 2 
+    then
+        log: "MPP_ReviewLocationSchedule"
+        rule response  ("MPP_ReviewLocationSchedule", true)
+ end
+ 
+ //FailureMessage 2:- More than 2 Vehicles added
+ rule "MPP_ReviewVehicleSchedule"
+ ruleflow-group "MPPReview"
+     when 
+        LOB name is "MPP" 
+        schedule code is "LOCATION" and items size is greater than 2 
+     then
+        log: "MPP_ReviewVehicleSchedule"
+        rule response  ("MPP_ReviewVehicleSchedule", true)
+end
+
+//FailureMessage 3:- 
+rule "ReviewFinancialStatement" 
+ruleflow-group "MPPReview"
+    when
+        LOB name is "MPP" 
+        schedule code is "FINSTMT"
+    then
+        log: "ReviewFinancialStatement"
+        rule response  ("ReviewFinancialStatement", true)
+end 
+
+//FailureMessage 4:-Previous Insurance details are entered for previous yea
+rule "Previous Insurance details are entered for previous year"
+ruleflow-group "MPPReview"
+	when
+	    LOB name is "MPP"
+		previous insurance size is equal to 0
+		or previous insurance details are not entered for previous year
+	then
+	    log: "Previous Insurance details are entered for previous year"
+        rule response  ("Previous Insurance details are entered for previous year", true)
+end
+
+//FailureMessage 5:- 
+rule  "MPP_ReviewCoverage"
+ruleflow-group "MPPReview"
+   when
+        LOB name is "MPP"
+        atleast one quote
+   then
+        log: "MPP_ReviewCoverage"
+        rule response with quoteId ("MPP_ReviewCoverage", true)
+end
+
+//FailureMessage 6:- [DOP] Net loss is equal to or more than 2
+rule  "MPP_ReviewIRPM"
+ruleflow-group "MPPReview"
+   when
+        LOB name is "MPP"
+        atleast one quote
+   then
+        log: "MPP_ReviewIRPM"
+        rule response with quoteId ("MPP_ReviewIRPM", true)
+end
+
+//FailureMessage 7:-
+rule  "MPP_ReviewRating"
+ruleflow-group "MPPReview"
+   when
+        LOB name is "MPP"
+        atleast one quote
+   then
+        log: "MPP_ReviewRating"
+        rule response with quoteId ("MPP_ReviewRating", true)
+end
