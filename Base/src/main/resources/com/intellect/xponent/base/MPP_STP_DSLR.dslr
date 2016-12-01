@@ -1,2 +1,213 @@
 package com.intellect.xponent.base;
 
+
+
+
+//created on: Nov 24, 2016
+
+expander Exponent_LOB_DSL.dsl
+
+
+import java.util.*;
+import com.seec.insurance.pc.comml.application.lob.quote.beans.CoverageInfoBean;
+import com.seec.insurance.pc.comml.application.lob.quote.beans.LimitInfoBean;
+import com.seec.insurance.pc.comml.application.lob.quote.beans.QuoteInfoBean;
+import com.seec.insurance.pc.comml.application.lob.quote.beans.RiskInfoBean;
+import com.seec.insurance.pc.comml.application.lob.beans.LOBInfoBean;
+import com.seec.insurance.pc.comml.application.lob.beans.ScheduleInfoBean;
+import com.seec.insurance.pc.comml.application.lob.beans.ScheduleGroupInfoBean;
+import com.seec.insurance.pc.comml.application.lob.beans.LossInfoBean;
+import com.seec.insurance.pc.comml.application.lob.beans.PreviousInsuranceInfoBean;
+import com.seec.insurance.pc.comml.application.lob.beans.UWQuestionInfoBean;
+import com.seec.insurance.pc.comml.application.workflowmgmt.beans.RulesStatusBean;
+import com.seec.insurance.pc.comml.utility.beans.CurrencyInfoBean;
+import com.seec.insurance.pc.comml.application.lob.beans.ScheduleItemInfoBean;
+import com.seec.insurance.rules.beans.STPRulesResponseBean;
+import com.seec.insurance.pc.comml.application.beans.CommlPolicyInfoBean;
+import com.seec.insurance.pc.comml.application.lob.beans.SchedulePropertyInfoBean;
+
+function RulesStatusBean setRuleStatusDSL(String ruleName,String status,String seqNum,String inputValue,String inputType)
+{
+    RulesStatusBean rulesStatusBean=new RulesStatusBean();
+    rulesStatusBean.setRule(ruleName);
+    rulesStatusBean.setStatus(status);
+    rulesStatusBean.setSeqNum(seqNum);
+    rulesStatusBean.setInputValue(inputValue);
+    rulesStatusBean.setValueType(inputType);
+    return rulesStatusBean;
+}
+
+// FailureMessage 1:- MPP section has more than 1 successfully rated Quotes
+rule "MPPSTP_MPP_QUOTES"
+ruleflow-group "MPPSTP"
+	when
+	    LOB name is "MPP"
+		check STP "MPP_ISSTP"
+	    size of quotes is greater than 1
+	then
+	    log: "MPP STPRule 1 FAILED : "
+	    set status ("MPP_STPRule1", "false", "1", " ", qSize)
+	    rule response ("MPP_ISSTP", false)
+	    set focus "MPPReview";
+end
+
+//FailureMessage 2:- Limit of Insurance is greater than $500,000
+rule "MPPSTP_AGG_LM_INSU"
+ruleflow-group "MPPSTP"
+	when
+    	LOB name is "MPP"
+		check STP "MPP_ISSTP"
+		atleast one quote risk information is "PROP" and coverage name is "BLDG"
+		limit amount is greater than 500000 and limit applies on "Coverage"
+	then
+	    log: "MPP STPRule 2 FAILED"
+	    set status ("MPP_STPRule2", "false", "2", "CURRENCY", limitAmt)
+	    rule response ("MPP_ISSTP", false)
+	    set focus "MPPReview";
+end
+
+//FailureMessage 3:- number of locations added for MPP section are greater than 2
+rule "MPPSTP_Locations_added_for_MPP_section"
+ruleflow-group "MPPSTP"
+	when
+	    LOB name is "MPP"
+		check STP "MPP_ISSTP"
+		schedule code is "LOCATION"
+		item's property name is "City" and values are ("Toronto", "Quebec", "Vancouver")
+    then
+        log: "MPP STPRule 3 Failed - LOCATION"
+    	set status ("MPP_STPRule3", "false", "3", " ", scheduleItems)
+    	rule response ("MPP_ISSTP", false)
+	    set focus "MPPReview";
+end
+
+//FailureMessage 4:- Premium amount for MPP quote is greater than $15000
+rule "MPPSTP_PREM_AMT_MPP"
+ruleflow-group "MPPSTP"
+	when
+	    LOB name is "MPP"
+		check STP "MPP_ISSTP"
+        atleast one quote premium amount is greater than 15000
+	then
+    	log: "MPP STPRule 4 FAILED"
+    	set status ("MPP_STPRule4", "false", "4", "CURRENCY", premAmt)
+    	rule response ("MPP_ISSTP", false)
+	    set focus "MPPReview";
+end
+
+//FailureMessage 5:- MPP Loss History section has one or more no of loss
+rule "MPPSTP_LOSS_HIST_MPP"
+ruleflow-group "MPPSTP"
+	when
+    	LOB name is "MPP"
+		check STP "MPP_ISSTP"
+		loss size is greater than 0
+	then
+	    log: "MPP STPRule 5 FAILED"
+    	set status ("MPP_STPRule5", "false", "5", " ", lossSize)
+    	rule response ("MPP_ISSTP", false)
+	    set focus "MPPReview";
+end
+
+//FailureMessage 6:- Previous Insurance details are not entered for previous year
+rule "MPPSTP_MPP_Loss_History"
+ruleflow-group "MPPSTP"
+	when
+	    LOB name is "MPP"
+		check STP "MPP_ISSTP"
+		previous insurance size is equal to 0
+		or previous insurance details are not entered for previous year
+	then
+	    log: "MPP STPRule 6 FAILED"
+    	set status ("MPP_STPRule6", "false", "6", " ", " ")
+    	rule response ("MPP_ISSTP", false)
+	    set focus "MPPReview";
+end
+
+
+//FailureMessage 7:- Fire Protection class on any of the location buildings is > 5
+rule "MPPSTP_Fire_Protection_Location"
+ruleflow-group "MPPSTP"
+	when
+	    LOB name is "MPP"
+		check STP "MPP_ISSTP"
+		schedule code is "LOCATION"
+		item's property name is "FIRE" and fire protection class values are ("1", "1/1x", "2", "2/2x", "3", "3/3x", "4", "4/4x", "5", "5/5x")
+    then
+    	log: "MPP STPRule 7 FAILED"
+    	set status ("MPP_STPRule7", "false", "7", " ", propValue)
+    	rule response ("MPP_ISSTP", false)
+	    set focus "MPPReview";
+end
+
+//FailureMessage 8:- Catastrophe exposure Exists
+rule "MPPSTP_Catastrophe_exposure_Exists"
+ruleflow-group "MPPSTP"
+	when
+	    LOB name is "MPP"
+		check STP "MPP_ISSTP"
+	    question number is "QuestionKEY005" and response is "No"
+	 then
+	    log: "MPP STPRule 8 FAILED"
+    	set status ("MPP_STPRule8", "false", "8", " ", responseValue)
+    	rule response ("MPP_ISSTP", false)
+	    set focus "MPPReview";
+end
+
+//FailureMessage 9:- Customer has been declined or had insurance coverage canceled or non-renewed in the past 3 years
+rule "MPPSTP_CUST_DECLINE"
+ruleflow-group "MPPSTP"
+	when
+	    LOB name is "MPP"
+		check STP "MPP_ISSTP"
+	    question number is "QuestionKEY005" and response is "Yes"
+	 then
+	    log: "MPP STPRule 9 FAILED"
+    	set status ("MPP_STPRule9", "false", "9", " ", responseValue)
+    	rule response ("MPP_ISSTP", false)
+	    set focus "MPPReview";
+end
+
+//FailureMessage 10:-location building does not have Alarm Devices installed or Details mentioned
+rule "MPPSTP_BUILDING_ALARM"
+ruleflow-group "MPPSTP"
+	when
+	    LOB name is "MPP"
+		check STP "MPP_ISSTP"
+		schedule code is "LOCATION"
+		item's property name is "BUCEN" and location building values  are ("BUCEN", "BUOT", "FIRECEN", "FIREOT", "SMOKE")
+    then
+    	log: "MPP STPRule 10 FAILED"
+    	set status ("MPP_STPRule10", "false", "10", " ", propValue)
+    	rule response ("MPP_ISSTP", false)
+	    set focus "MPPReview";
+end
+
+//FailureMessage 11:-[MPP] Net loss is equal to or more than 2
+rule "MPPSTP_NET_LOSS"
+ruleflow-group "MPPSTP"
+	when
+	    LOB name is "MPP"
+		check STP "MPP_ISSTP"
+		schedule code is "FINSTMT"
+		item's property name is "NETLOSS" and net loss values does not null
+    then
+    	log: "MPP STPRule 11 FAILED"
+    	set status ("MPP_STPRule11", "false", "11", " ", " ")
+    	rule response ("MPP_ISSTP", false)
+	    set focus "MPPReview";
+end
+
+//FailureMessage 12:-number of Vehicles added in Vehicle Schedule are more than 3
+rule "MPPSTP_NUM_OF_VEHICLE"
+ruleflow-group "MPPSTP"
+	when
+	    LOB name is "MPP"
+		check STP "MPP_ISSTP"
+		schedule code is "VEHICLE" and items size is greater than 3
+    then
+    	log: "MPP STPRule 12 FAILED"
+    	set status ("MPP_STPRule12", "false", "12", " ", scheduleItems)
+    	rule response ("MPP_ISSTP", false)
+	    set focus "MPPReview";
+end
