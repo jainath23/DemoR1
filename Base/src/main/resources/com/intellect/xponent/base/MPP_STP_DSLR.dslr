@@ -5,7 +5,7 @@ package com.intellect.xponent.base;
 
 //created on: Nov 24, 2016
 
-expander Exponent_LOB_DSL.dsl
+expander XponentDefinitions.dsl
 
 
 import java.util.*;
