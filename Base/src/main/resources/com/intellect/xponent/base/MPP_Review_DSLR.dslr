@@ -1,7 +1,7 @@
 package com.intellect.xponent.base;
 
 
-/*
+
 //FailureMessage 1:- two or more locations added
  rule "MPP_ReviewLocationSchedule"
  ruleflow-group "MPPReview"
@@ -78,4 +78,4 @@ ruleflow-group "MPPReview"
    then
         log: "MPP_ReviewRating"
         rule response with quoteId ("MPP_ReviewRating", true)
-end*/
+end
