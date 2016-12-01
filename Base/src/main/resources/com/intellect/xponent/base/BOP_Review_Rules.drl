@@ -1,2 +1,83 @@
 package com.intellect.xponent.base;
 
+
+import java.util.*;
+import com.seec.insurance.pc.comml.application.lob.quote.beans.CoverageInfoBean;
+import com.seec.insurance.pc.comml.application.lob.quote.beans.LimitInfoBean;
+import com.seec.insurance.pc.comml.application.lob.quote.beans.QuoteInfoBean;
+import com.seec.insurance.pc.comml.application.lob.quote.beans.RiskInfoBean;
+import com.seec.insurance.pc.comml.application.lob.beans.LOBInfoBean;
+import com.seec.insurance.pc.comml.application.lob.beans.ScheduleInfoBean;
+import com.seec.insurance.pc.comml.application.lob.beans.ScheduleGroupInfoBean;
+import com.seec.insurance.pc.comml.application.lob.beans.LossInfoBean;
+import com.seec.insurance.pc.comml.application.lob.beans.PreviousInsuranceInfoBean;
+import com.seec.insurance.pc.comml.application.lob.beans.UWQuestionInfoBean;
+import com.seec.insurance.pc.comml.application.workflowmgmt.beans.RulesStatusBean;
+import com.seec.insurance.pc.comml.utility.beans.CurrencyInfoBean;
+import com.seec.insurance.pc.comml.application.lob.beans.ScheduleItemInfoBean;
+import com.seec.insurance.rules.beans.STPRulesResponseBean;
+import com.seec.insurance.pc.comml.application.beans.CommlPolicyInfoBean;
+
+rule "BOP Review previous insurance rule"
+ruleflow-group "BOPReview"
+lock-on-active 	
+   when
+	$STPRulesResponseBean : STPRulesResponseBean();
+	$commPolicy : CommlPolicyInfoBean();
+	$lobInfo: LOBInfoBean(lob.equalsIgnoreCase("BOP") && preInsSize:previousInsurances.size()) from $commPolicy.getLobs();
+    Boolean(booleanValue == true) from preInsSize == 0 or
+	not( PreviousInsuranceInfoBean( java.util.Calendar.getInstance().get(java.util.Calendar.YEAR)-1 == OperationHelper.getYear(getPolicyEffectiveDate())) from $lobInfo.getPreviousInsurances())
+   then
+    $STPRulesResponseBean.getResultMap().put("BOP_REVIEW_PRIOR_INS",true);
+	update($STPRulesResponseBean);
+end
+
+rule  "BOP_ReviewLocationSchedule"
+ruleflow-group "BOPReview"
+lock-on-active  
+   when
+    $STPRulesResponseBean : STPRulesResponseBean();
+    $commPolicy : CommlPolicyInfoBean();
+    $lobInfo :  LOBInfoBean(lob=="BOP") from $commPolicy.getLobs();
+   then
+     $STPRulesResponseBean.getResultMap().put("BOP_ReviewLocationSchedule",true);
+	update($STPRulesResponseBean);
+end
+
+
+
+rule  "BOP_ReviewCoverage"
+ruleflow-group "BOPReview"
+   when
+    $commPolicy : CommlPolicyInfoBean();
+    $STPRulesResponseBean:STPRulesResponseBean();
+    $lobInfo :  LOBInfoBean(lob=="BOP") from $commPolicy.getLobs();
+    $quote :QuoteInfoBean() from $lobInfo.quotes;
+   then
+    System.out.println("Creating coverage task");
+    $STPRulesResponseBean.getResultMap().put("BOP_ReviewCoverage_"+$quote.getQuoteId(),true);
+end
+
+rule  "BOP_ReviewIRPM"
+ruleflow-group "BOPReview"
+   when
+    $commPolicy : CommlPolicyInfoBean();
+    $STPRulesResponseBean:STPRulesResponseBean();
+    $lobInfo :  LOBInfoBean(lob=="BOP") from $commPolicy.getLobs();
+    $quote :QuoteInfoBean() from $lobInfo.quotes;
+   then
+    System.out.println("Creating IRPM task");
+    $STPRulesResponseBean.getResultMap().put("BOP_ReviewIRPM_"+$quote.getQuoteId(),true);
+end
+
+rule  "BOP_ReviewRating"
+ruleflow-group "BOPReview"
+   when
+    $commPolicy : CommlPolicyInfoBean();
+    $STPRulesResponseBean:STPRulesResponseBean();
+    $lobInfo :  LOBInfoBean(lob=="BOP") from $commPolicy.getLobs();
+    $quote :QuoteInfoBean() from $lobInfo.quotes;
+   then
+    System.out.println("Creating rating task");
+    $STPRulesResponseBean.getResultMap().put("BOP_ReviewRating_"+$quote.getQuoteId(),true);
+end
