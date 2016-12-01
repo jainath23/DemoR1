@@ -1,2 +1,12 @@
 package com.intellect.xponent.base;
 
+function RulesStatusBean setRuleStatus(String ruleName,String status,String seqNum,String inputValue,String inputType)
+{
+    RulesStatusBean rulesStatusBean=new RulesStatusBean();
+    rulesStatusBean.setRule(ruleName);
+    rulesStatusBean.setStatus(status);
+    rulesStatusBean.setSeqNum(seqNum);
+    rulesStatusBean.setInputValue(inputValue);
+    rulesStatusBean.setValueType(inputType);
+    return rulesStatusBean;
+}
