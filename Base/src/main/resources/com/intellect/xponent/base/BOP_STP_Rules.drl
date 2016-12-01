@@ -1,2 +1,245 @@
 package com.intellect.xponent.base;
 
+
+import java.util.*;
+import com.seec.insurance.pc.comml.application.lob.quote.beans.CoverageInfoBean;
+import com.seec.insurance.pc.comml.application.lob.quote.beans.LimitInfoBean;
+import com.seec.insurance.pc.comml.application.lob.quote.beans.QuoteInfoBean;
+import com.seec.insurance.pc.comml.application.lob.quote.beans.RiskInfoBean;
+import com.seec.insurance.pc.comml.application.lob.beans.LOBInfoBean;
+import com.seec.insurance.pc.comml.application.lob.beans.ScheduleInfoBean;
+import com.seec.insurance.pc.comml.application.lob.beans.ScheduleGroupInfoBean;
+import com.seec.insurance.pc.comml.application.lob.beans.LossInfoBean;
+import com.seec.insurance.pc.comml.application.lob.beans.PreviousInsuranceInfoBean;
+import com.seec.insurance.pc.comml.application.lob.beans.UWQuestionInfoBean;
+import com.seec.insurance.pc.comml.application.workflowmgmt.beans.RulesStatusBean;
+import com.seec.insurance.pc.comml.utility.beans.CurrencyInfoBean;
+import com.seec.insurance.pc.comml.application.lob.beans.ScheduleItemInfoBean;
+import com.seec.insurance.rules.beans.STPRulesResponseBean;
+import com.seec.insurance.pc.comml.application.beans.CommlPolicyInfoBean;
+import com.seec.insurance.pc.comml.application.commoninfo.beans.AccountInfoBean;
+
+// FailureMessage 1:- BOP section has more than 1 successfully rated Quotes
+rule "BOP_QUOTES"
+ruleflow-group "BOPSTP"
+	when
+	    $STPRulesResponseBean:STPRulesResponseBean();
+	    HashMap(this["BOP_ISSTP"] == null || this["BOP_ISSTP"]==true) from $STPRulesResponseBean.resultMap
+	    $commlPolicyInfoBean : CommlPolicyInfoBean();
+		$lobInfo: LOBInfoBean(lob.equalsIgnoreCase("BOP"),qSize:quotes.size()>1) from $commlPolicyInfoBean.getLobs();
+	then
+	    System.out.println("BOP STPRule 1 FAILED : "+qSize);
+        $STPRulesResponseBean.getRuleStatusBeans().add(setRuleStatus("BOP_STPRule1","false","1",String.valueOf(qSize),""));
+        $STPRulesResponseBean.getResultMap().put("BOP_ISSTP",new Boolean(false));	
+        update($STPRulesResponseBean);
+    	drools.setFocus("BOPReview");
+end
+
+//FailureMessage 2:- Limit of Insurance is greater than $100,000
+rule "BOP_LM_INSU"
+ruleflow-group "BOPSTP"
+    when
+        $STPRulesResponseBean:STPRulesResponseBean();
+        HashMap(this["BOP_ISSTP"] == null || this["BOP_ISSTP"]==true) from $STPRulesResponseBean.resultMap
+        $commlPolicyInfoBean : CommlPolicyInfoBean();
+	    $lobInfo: LOBInfoBean(lob.equalsIgnoreCase("BOP")) from $commlPolicyInfoBean.getLobs();
+        $quoteInfo: QuoteInfoBean( ) from $lobInfo.getQuotes()
+        $riskInfo: RiskInfoBean(description.equalsIgnoreCase("PROP")) from $quoteInfo.getRiskinfos()
+        $coverageInfo: CoverageInfoBean(coverageName.equalsIgnoreCase("BLDG")) from $riskInfo.getCoverages()
+        $limitInfo: LimitInfoBean(limitAmt:currency.getAmount() > 100000) from $coverageInfo.getLimits()
+    then
+        System.out.println("BOP STPRule 2 FAILED");
+    	$STPRulesResponseBean.getRuleStatusBeans().add(setRuleStatus("BOP_STPRule2","false","2",limitAmt.toString(),"CURRENCY"));
+    	$STPRulesResponseBean.getResultMap().put("BOP_ISSTP",new Boolean(false));	
+    	update($STPRulesResponseBean);
+    	drools.setFocus("BOPReview");
+end
+
+
+//FailureMessage 3:- Aggregate limit of Insurance is greater than $100,000
+rule "BOP_AGG_LM_INSU"
+ruleflow-group "BOPSTP"
+    when
+        $STPRulesResponseBean:STPRulesResponseBean();
+        HashMap(this["BOP_ISSTP"] == null || this["BOP_ISSTP"]==true) from $STPRulesResponseBean.resultMap
+        $commlPolicyInfoBean : CommlPolicyInfoBean();
+	    $lobInfo: LOBInfoBean(lob.equalsIgnoreCase("BOP")) from $commlPolicyInfoBean.getLobs();
+        $quoteInfo: QuoteInfoBean( ) from $lobInfo.getQuotes()
+        $riskInfo: RiskInfoBean(description.equalsIgnoreCase("LIAB")) from $quoteInfo.getRiskinfos()
+        $coverageInfo: CoverageInfoBean(coverageName.equalsIgnoreCase("BLIAB")) from $riskInfo.getCoverages()
+        $limitInfo: LimitInfoBean(limitAppliesTo.equalsIgnoreCase("Aggregate") ,limitAmt:currency.getAmount() > 100000) from $coverageInfo.getLimits()
+    then
+        System.out.println("BOP STPRule 3 FAILED");
+    	$STPRulesResponseBean.getRuleStatusBeans().add(setRuleStatus("BOP_STPRule3","false","3",limitAmt.toString(),"CURRENCY"));
+    	$STPRulesResponseBean.getResultMap().put("BOP_ISSTP",new Boolean(false));	
+    	update($STPRulesResponseBean);
+    	drools.setFocus("BOPReview");
+end
+
+//FailureMessage 4:- number of locations added for BOP section are greater than 2
+rule "Locations_added_for_BOP_section"
+ruleflow-group "BOPSTP"
+	when
+	    $STPRulesResponseBean:STPRulesResponseBean();
+	    HashMap(this["BOP_ISSTP"] == null || this["BOP_ISSTP"]==true) from $STPRulesResponseBean.resultMap
+	    $commlPolicyInfoBean : CommlPolicyInfoBean();
+		$lobInfo: LOBInfoBean(lob.equalsIgnoreCase("BOP")) from $commlPolicyInfoBean.getLobs();
+		$scheduleInfo : ScheduleInfoBean(  ) from $lobInfo.getSchedules();
+		$scheduleGroupInfo : ScheduleGroupInfoBean( scheduleCode.equalsIgnoreCase("LOCATION"),scheduleItems.size()>1) from $scheduleInfo.getScheduleGroups();
+    then
+    	System.out.println("BOP STPRule 4 Failed - LOCATION ********************"+ $scheduleGroupInfo.getScheduleCode());
+    	$STPRulesResponseBean.getRuleStatusBeans().add(setRuleStatus("BOP_STPRule4","false","4",String.valueOf($scheduleGroupInfo.getScheduleItems().size()),""));
+    	$STPRulesResponseBean.getResultMap().put("BOP_ISSTP",new Boolean(false));	
+    	update($STPRulesResponseBean);
+    	drools.setFocus("BOPReview");
+end
+
+
+
+//FailureMessage 5:- Premium amount for BOP quote is greater than $5000
+rule "PREM_AMT_BOP"
+ruleflow-group "BOPSTP"
+	when
+	    $STPRulesResponseBean:STPRulesResponseBean();
+	    $commlPolicyInfoBean : CommlPolicyInfoBean();
+		$lobInfo: LOBInfoBean(lob.equalsIgnoreCase("BOP")) from $commlPolicyInfoBean.getLobs();
+        $quoteInfo: QuoteInfoBean(premAmt:premium.getAmount() > 5000) from $lobInfo.getQuotes()
+        HashMap(this["BOP_ISSTP"] == null || this["BOP_ISSTP"]==true) from $STPRulesResponseBean.resultMap
+	then
+    	System.out.println("BOP STPRule 5 FAILED");
+        $STPRulesResponseBean.getRuleStatusBeans().add(setRuleStatus("BOP_STPRule5","false","5",premAmt.toString(),"CURRENCY"));
+    	$STPRulesResponseBean.getResultMap().put("BOP_ISSTP",new Boolean(false));	
+    	update($STPRulesResponseBean);
+    	drools.setFocus("BOPReview");
+end
+
+
+//FailureMessage 6:- BOP Loss History section has one or more no of loss
+rule "LOSS_HIST_BOP"
+ruleflow-group "BOPSTP"
+	when
+	    $STPRulesResponseBean:STPRulesResponseBean();
+	    $commlPolicyInfoBean : CommlPolicyInfoBean();
+	    HashMap(this["BOP_ISSTP"] == null || this["BOP_ISSTP"]==true) from $STPRulesResponseBean.resultMap
+	    $lobInfo: LOBInfoBean(lob.equalsIgnoreCase("BOP") && lossSize:losses.size() > 0) from $commlPolicyInfoBean.getLobs();
+	then
+	    System.out.println("BOP STPRule 6 FAILED");
+        $STPRulesResponseBean.getRuleStatusBeans().add(setRuleStatus("BOP_STPRule6","false","6",String.valueOf(lossSize),""));
+    	$STPRulesResponseBean.getResultMap().put("BOP_ISSTP",new Boolean(false));	
+    	update($STPRulesResponseBean);
+    	drools.setFocus("BOPReview");
+end
+
+
+//FailureMessage 7:- Previous Insurance details are not entered for previous year
+rule "BOP_Previous_Insurance"
+ruleflow-group "BOPSTP"
+	when
+	    $STPRulesResponseBean:STPRulesResponseBean();
+		$commlPolicyInfoBean : CommlPolicyInfoBean();
+		HashMap(this["BOP_ISSTP"] == null || this["BOP_ISSTP"]==true) from $STPRulesResponseBean.resultMap
+        $lobInfo: LOBInfoBean(lob.equalsIgnoreCase("BOP") && preInsSize:previousInsurances.size()) from $commlPolicyInfoBean.getLobs();
+        Boolean(booleanValue == true) from preInsSize == 0 or
+	    not( PreviousInsuranceInfoBean( java.util.Calendar.getInstance().get(java.util.Calendar.YEAR)-1 == OperationHelper.getYear(getPolicyEffectiveDate())) from $lobInfo.getPreviousInsurances())
+	then
+	    System.out.println("BOP STPRule 7 FAILED");
+        $STPRulesResponseBean.getRuleStatusBeans().add(setRuleStatus("BOP_STPRule7","false","7","",""));
+    	$STPRulesResponseBean.getResultMap().put("BOP_ISSTP",new Boolean(false));	
+    	update($STPRulesResponseBean);
+    	drools.setFocus("BOPReview");
+end
+
+
+//FailureMessage 8:- Fire Protection class on any of the location buildings is > 5
+rule "BOP_Fire_Protection_Location"
+ruleflow-group "BOPSTP"
+	when
+	    $STPRulesResponseBean:STPRulesResponseBean();
+	    $commlPolicyInfoBean : CommlPolicyInfoBean();
+	    $lobInfo: LOBInfoBean(lob.equalsIgnoreCase("BOP")) from $commlPolicyInfoBean.getLobs();
+	    HashMap(this["BOP_ISSTP"] == null || this["BOP_ISSTP"]==true) from $STPRulesResponseBean.resultMap
+		$scheduleInfo : ScheduleInfoBean(  ) from $lobInfo.getSchedules();
+		$scheduleGroupInfo : ScheduleGroupInfoBean( scheduleCode.equalsIgnoreCase("LOCATION")) from $scheduleInfo.getScheduleGroups();
+    	$scheduleItemInfoBean : ScheduleItemInfoBean() from $scheduleGroupInfo.getScheduleItems();
+		$schedulePropertyInfoBean : SchedulePropertyInfoBean((PropertyName=="FIRE") &&(propValue:PropertyValue not in ("1","1/1x","2","2/2x","3","3/3x","4","4/4x","5","5/5x")))from $scheduleItemInfoBean.getProperties();
+    then
+    	System.out.println("BOP STPRule 8 FAILED");
+    	$STPRulesResponseBean.getResultMap().put("BOP_ISSTP",new Boolean(false));	
+        $STPRulesResponseBean.getRuleStatusBeans().add(setRuleStatus("BOP_STPRule8","false","8",propValue.toString(),""));
+        update($STPRulesResponseBean);
+    	drools.setFocus("BOPReview");
+end
+
+
+//FailureMessage 9:- Estimated payroll expenses or total revenue for the next 12 months > $ 100,000
+rule "BOP_Estimated_Payroll_Expenses"
+ruleflow-group "BOPSTP"
+	when
+	    $STPRulesResponseBean:STPRulesResponseBean();
+	    $commlPolicyInfoBean : CommlPolicyInfoBean();
+	    HashMap(this["BOP_ISSTP"] == null || this["BOP_ISSTP"]==true) from $STPRulesResponseBean.resultMap
+	    $lobInfo: LOBInfoBean(lob.equalsIgnoreCase("BOP")) from $commlPolicyInfoBean.getLobs();
+	    $questionInfo: UWQuestionInfoBean("QuestionKEY007".equalsIgnoreCase(questionNumber),responseValue:Double.parseDouble(response)>100000) from $lobInfo.getQuestions()
+	 then
+	    System.out.println("BOP STPRule 9 FAILED");
+        $STPRulesResponseBean.getRuleStatusBeans().add(setRuleStatus("BOP_STPRule9","false","9",String.valueOf(responseValue),"CURRENCY"));
+    	$STPRulesResponseBean.getResultMap().put("BOP_ISSTP",new Boolean(false));	
+    	update($STPRulesResponseBean);
+    	drools.setFocus("BOPReview");
+end
+
+
+//FailureMessage 10:- Customer has been declined or had insurance coverage canceled or non-renewed in the past 3 years
+rule "BOP_CUST_DECLINE"
+ruleflow-group "BOPSTP"
+	when
+	    $STPRulesResponseBean:STPRulesResponseBean();
+	    $commlPolicyInfoBean : CommlPolicyInfoBean();
+	    HashMap(this["BOP_ISSTP"] == null || this["BOP_ISSTP"]==true) from $STPRulesResponseBean.resultMap
+	    $lobInfo: LOBInfoBean(lob.equalsIgnoreCase("BOP")) from $commlPolicyInfoBean.getLobs();
+	    $questionInfo: UWQuestionInfoBean("QuestionKEY009".equalsIgnoreCase(questionNumber), "YES".equalsIgnoreCase(response),responseValue:response) from $lobInfo.getQuestions()
+	 then
+    	System.out.println("BOP STPRule 10 FAILED");
+        $STPRulesResponseBean.getRuleStatusBeans().add(setRuleStatus("BOP_STPRule10","false","10",responseValue,""));
+    	$STPRulesResponseBean.getResultMap().put("BOP_ISSTP",new Boolean(false));	
+    	update($STPRulesResponseBean);
+    	drools.setFocus("BOPReview");
+end
+
+//FailureMessage 11:-location building does not have Alarm Devices installed or Details mentioned
+rule "BOP_BUILDING_ALARM"
+ruleflow-group "BOPSTP"
+	when
+	    $STPRulesResponseBean:STPRulesResponseBean();
+	    $commlPolicyInfoBean : CommlPolicyInfoBean();
+	    $lobInfo: LOBInfoBean(lob.equalsIgnoreCase("BOP")) from $commlPolicyInfoBean.getLobs();
+	    HashMap(this["BOP_ISSTP"] == null || this["BOP_ISSTP"]==true) from $STPRulesResponseBean.resultMap
+		$scheduleInfo : ScheduleInfoBean(  ) from $lobInfo.getSchedules();
+		$scheduleGroupInfo : ScheduleGroupInfoBean( scheduleCode.equalsIgnoreCase( "LOCATION") ) from $scheduleInfo.getScheduleGroups();
+        $scheduleItemInfoBean : ScheduleItemInfoBean() from $scheduleGroupInfo.getScheduleItems();
+		$schedulePropertyInfoBean : SchedulePropertyInfoBean(((propertyName=="BUCEN") ||(propertyName=="BUOT")||(propertyName=="FIRECEN")||(propertyName=="FIREOT")||(propertyName=="SMOKE") )&&(propValue:propertyValue=="false")) from $scheduleItemInfoBean.getProperties()
+then
+        System.out.println("BOP STPRule 11 FAILED");
+        $STPRulesResponseBean.getRuleStatusBeans().add(setRuleStatus("BOP_STPRule11","false","11",propValue.toString(),""));
+    	$STPRulesResponseBean.getResultMap().put("BOP_ISSTP",new Boolean(false));	
+    	update($STPRulesResponseBean);
+    	drools.setFocus("BOPReview");
+end
+
+//FailureMessage 12:-Business Category of customer is Contractors Business or Auto Service Repairs
+
+rule "BOP_Auto Service Repairs"
+ruleflow-group "BOPSTP"
+	when
+	    $STPRulesResponseBean:STPRulesResponseBean();
+	    $commlPolicyInfoBean : CommlPolicyInfoBean();
+	    $lobInfo: LOBInfoBean(lob.equalsIgnoreCase("BOP")) from $commlPolicyInfoBean.getLobs();
+	    HashMap(this["BOP_ISSTP"] == null || this["BOP_ISSTP"]==true) from $STPRulesResponseBean.resultMap
+		AccountInfoBean(businessCategoryCode != null && ("31"==businessCategoryCode || "21"==businessCategoryCode || "31"==businessCategoryINSCode || "21"==businessCategoryINSCode)) from $commlPolicyInfoBean.getAccountInfo()
+then
+        System.out.println("BOP STPRule 12 FAILED");
+        $STPRulesResponseBean.getRuleStatusBeans().add(setRuleStatus("BOP_STPRule12","false","12","",""));
+    	$STPRulesResponseBean.getResultMap().put("BOP_ISSTP",new Boolean(false));	
+    	update($STPRulesResponseBean);
+    	drools.setFocus("BOPReview");
+end
