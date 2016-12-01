@@ -36,4 +36,4 @@
 [condition][]"{SCHCODE}" Schedule of the lob=$scheduleGroupInfo:ScheduleGroupInfoBean(scheduleCode =="{SCHCODE}",scheduleItems:scheduleItems.size()) from $lobInfo.schedules.scheduleGroups
 [condition][]has Atleast one entry of Schedule=$schItem:ScheduleItemInfoBean() from $scheduleGroupInfo.scheduleItems
 [condition][]with Schedule property=SchedulePropertyInfoBean() from $schItem.properties
-[condition][]- has "{propCode}" list "{items}"=propertyName=="{propName}",PropertyValue in "{items}"
+[condition][]- "{propCode}" in {items}=propertyName=="{propCode}" , propertyValue in ({items})
