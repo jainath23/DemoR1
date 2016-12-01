@@ -216,7 +216,11 @@ ruleflow-group "MPPSTP"
         Given lob is "MPP"
         "LOCATION" Schedule of the lob has Atleast one entry of Schedule
         with Schedule property
-        - has "EQUAKETERR" list "012,011,013,014,015"
-    then
+        - "EQUAKETERR" in "012","011"
+   then
+	    Log: "MPP STPRule 12 FAILED"
+	    Set status "MPP_STPRule12", "false", "12", "", ""
+	    Rules Response "MPP_ISSTP", false
+	    Set focus "MPPReview";
        
 end
