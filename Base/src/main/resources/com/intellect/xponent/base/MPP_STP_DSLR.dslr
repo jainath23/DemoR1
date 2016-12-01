@@ -1,8 +1,5 @@
 package com.intellect.xponent.base;
 
-
-
-
 //created on: Nov 24, 2016
 
 expander XponentDefinitions.dsl
@@ -36,7 +33,7 @@ function RulesStatusBean setRuleStatusDSL(String ruleName,String status,String s
     rulesStatusBean.setValueType(inputType);
     return rulesStatusBean;
 }
-
+/*
 // FailureMessage 1:- MPP section has more than 1 successfully rated Quotes
 rule "MPPSTP_MPP_QUOTES"
 ruleflow-group "MPPSTP"
@@ -210,4 +207,4 @@ ruleflow-group "MPPSTP"
     	set status ("MPP_STPRule12", "false", "12", " ", scheduleItems)
     	rule response ("MPP_ISSTP", false)
 	    set focus "MPPReview";
-end
+end*/
