@@ -30,7 +30,7 @@ function RulesStatusBean setRuleStatus(String ruleName,String status,String seqN
     return rulesStatusBean;
 }
 
-
+/*
 // FailureMessage 1:- MPP section has more than 1 successfully rated Quotes
 rule "MPPSTP_MPP_QUOTES"
 ruleflow-group "MPPSTP"
@@ -257,4 +257,4 @@ ruleflow-group "MPPSTP"
     	$STPRulesResponseBean.getResultMap().put("MPP_ISSTP",new Boolean(false));
     	update($STPRulesResponseBean);
     	drools.setFocus("MPPReview");
-end
+end*/
