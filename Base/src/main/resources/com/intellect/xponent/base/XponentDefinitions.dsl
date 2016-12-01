@@ -1,7 +1,8 @@
 [condition][]LOB name is "{LOB}"=$STPRulesResponseBean:STPRulesResponseBean(); $commlPolicyInfoBean : CommlPolicyInfoBean();$lobInfo: LOBInfoBean(lob.equalsIgnoreCase("{LOB}"),qSize:quotes.size(),lossSize:losses.size()) from $commlPolicyInfoBean.getLobs()
 [condition][]check STP "{STP}"=HashMap(this["{STP}"] == null || this["{STP}"]==true) from $STPRulesResponseBean.resultMap
 [condition][]size of quotes is greater than {size}=Boolean(booleanValue==true) from qSize >{size}
-[condition][]atleast one quote =$quoteInfo: QuoteInfoBean(premAmt:premium.getAmount() ) from $lobInfo.getQuotes()[condition][]schedule =$scheduleInfo : ScheduleInfoBean()from $lobInfo.getSchedules()
+[condition][]atleast one quote =$quoteInfo: QuoteInfoBean(premAmt:premium.getAmount() ) from $lobInfo.getQuotes()
+[condition][]schedule =$scheduleInfo : ScheduleInfoBean()from $lobInfo.getSchedules()
 [condition][]risk information is "{descr}"= $riskInfo: RiskInfoBean(description.equalsIgnoreCase("{descr}")) from $quoteInfo.getRiskinfos()
 [condition][]and coverage name is "{coverageName}"=  $coverageInfo: CoverageInfoBean(coverageName.equalsIgnoreCase("{coverageName}")) from $riskInfo.getCoverages()
 [condition][]limit amount is greater than {amount} and limit applies on "{coverage}"=$limitInfo: LimitInfoBean(limitAmt:currency.getAmount() > {amount} ,limitAppliesTo.equalsIgnoreCase("{coverage}")) from $coverageInfo.getLimits()
