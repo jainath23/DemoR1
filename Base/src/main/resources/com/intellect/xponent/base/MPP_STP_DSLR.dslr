@@ -208,3 +208,15 @@ ruleflow-group "MPPSTP"
     	rule response ("MPP_ISSTP", false)
 	    set focus "MPPReview";
 end*/
+
+//FailureMessage 12:-number of Vehicles added in Vehicle Schedule are more than 3
+rule "MPPSTP_EQ_ZONE"
+ruleflow-group "MPPSTP"
+    when
+        Given lob is "MPP"
+        "LOCATION" Schedule of the lob has Atleast one entry of Schedule
+        with Schedule property
+        - has "EQUAKETERR" list "012,011,013,014,015"
+    then
+       
+end
