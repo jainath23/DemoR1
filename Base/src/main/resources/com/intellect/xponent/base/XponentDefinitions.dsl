@@ -33,7 +33,7 @@
 
 
 [condition][]Given lob is "{LOB}"=$STPRulesResponseBean:STPRulesResponseBean(); $commlPolicyInfoBean : CommlPolicyInfoBean();$lobInfo: LOBInfoBean(lob.equalsIgnoreCase("{LOB}"),qSize:quotes.size(),lossSize:losses.size()) from $commlPolicyInfoBean.getLobs()
-[condition][]"{SCHCODE}" schedule of the lob=$scheduleGroupInfo:ScheduleGroupInfoBean(scheduleCode =="{SCHCODE}",scheduleItems:scheduleItems.size()) from $lobInfo.schedules.scheduleGroups
+[condition][]"{SCHCODE}" Schedule of the lob=$scheduleGroupInfo:ScheduleGroupInfoBean(scheduleCode =="{SCHCODE}",scheduleItems:scheduleItems.size()) from $lobInfo.schedules.scheduleGroups
 [condition][]has atleast one entry of schedule=$schItem:ScheduleItemInfoBean() from $scheduleGroupInfo.scheduleItems
 [condition][]with schedule property=SchedulePropertyInfoBean() from $schItem.properties
 [condition][]- has "{propCode}" list "{items}"=propertyName=="{propName}",PropertyValue in "{items}"
