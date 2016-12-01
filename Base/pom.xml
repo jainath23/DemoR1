@@ -6,6 +6,13 @@
   <artifactId>Base</artifactId>
   <version>1.0</version>
   <name>Base</name>
+  <dependencies>
+    <dependency>
+      <groupId>BCSUIModel</groupId>
+      <artifactId>BCSUIModel</artifactId>
+      <version>4</version>
+    </dependency>
+  </dependencies>
   <build>
     <plugins>
       <plugin>
